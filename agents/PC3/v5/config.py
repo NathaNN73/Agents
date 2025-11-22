@@ -17,9 +17,9 @@ SIZE_RANGE = (0.5, 2.0)
 SENSE_RANGE = (80.0, 180.0)  # Mayor rango de detección
 
 # Parámetros de energía (AJUSTADOS para días más largos)
-BASE_ENERGY = 500.0  # Más energía inicial
-FOOD_ENERGY = 80.0
-BLOB_ENERGY = 200.0  # Energía al comer otro blob
+BASE_ENERGY = 1000.0  # Más energía inicial
+FOOD_ENERGY = 200.0
+BLOB_ENERGY = 500.0  # Energía al comer otro blob
 
 # Parámetros de comportamiento
 SIZE_EAT_THRESHOLD = 1.2  # 20% más grande para poder comer

@@ -2,14 +2,15 @@
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Simulación de Selección Natural</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
     <div class="container">
+
         <header>
             <h1>🧬 Simulación de Selección Natural</h1>
             <div class="status">
@@ -17,107 +18,52 @@
             </div>
         </header>
 
-        <div class="main-content">
-            <!-- Panel de control -->
-            <div class="control-panel">
-                <div class="control-section">
-                    <h3>⚙️ Control</h3>
-                    <button id="pause-btn" class="btn" onclick="togglePause()">⏸️ Pausar</button>
-                    <div class="speed-control">
-                        <label for="speed-slider">Velocidad: <span id="speed-value">1.0</span>x</label>
+        <!-- Layout principal -->
+        <div class="layout">
+
+            <!-- PANEL -->
+            <aside class="sidebar">
+                <div class="control-panel">
+                    <div class="control-section">
+                        <h3>⚙️ Control</h3>
+                        <button id="pause-btn" class="btn" onclick="togglePause()">⏸️ Pausar</button>
+
+                        <label for="speed-slider">Velocidad:
+                            <span id="speed-value">1.0</span>x
+                        </label>
                         <input type="range" id="speed-slider" min="0.1" max="3" step="0.1" value="1.0"
-                            oninput="updateSpeedDisplay(this.value)" onchange="setSpeed(this.value)">
+                            oninput="updateSpeedDisplay(this.value)" onchange="setSpeed(this.value)" />
+
                         <div class="speed-presets">
                             <button class="preset-btn" onclick="setSpeedPreset(0.2)">🐌 Lento</button>
                             <button class="preset-btn" onclick="setSpeedPreset(1.0)">▶️ Normal</button>
                             <button class="preset-btn" onclick="setSpeedPreset(2.0)">⚡ Rápido</button>
                         </div>
                     </div>
-                </div>
 
-                <div class="control-section">
-                    <h3>📊 Estadísticas</h3>
-                    <div class="stats">
-                        <div class="stat-item">
-                            <span class="stat-label">Día:</span>
-                            <span id="day" class="stat-value">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Población:</span>
-                            <span id="population" class="stat-value">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Total Nacidos:</span>
-                            <span id="total-born" class="stat-value">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Total Muertos:</span>
-                            <span id="total-died" class="stat-value">0</span>
+                    <div class="control-section">
+                        <h3>📊 Estadísticas</h3>
+                        <div class="stats">
+                            <div class="stat-item"><span>Día:</span><span id="day">0</span></div>
+                            <div class="stat-item"><span>Población:</span><span id="population">0</span></div>
+                            <div class="stat-item"><span>Total Nacidos:</span><span id="total-born">0</span></div>
+                            <div class="stat-item"><span>Total Muertos:</span><span id="total-died">0</span></div>
                         </div>
                     </div>
-                </div>
 
-                <div class="control-section">
+                    <div class="control-section">
+                        <h3>🧬 Rasgos Promedio</h3>
+                        <div class="stats">
+                            <div class="stat-item"><span>Velocidad:</span><span id="avg-speed">0.00</span></div>
+                            <div class="stat-item"><span>Tamaño:</span><span id="avg-size">0.00</span></div>
+                            <div class="stat-item"><span>Sentido:</span><span id="avg-sense">0.00</span></div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
 
-                    <h3>🧬 Rasgos Promedio</h3>
-                    <div class="stats">
-                        <div class="stat-item">
-                            <span class="stat-label">Velocidad:</span>
-                            <span id="avg-speed" class="stat-value">0.00</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Tamaño:</span>
-                            <span id="avg-size" class="stat-value">0.00</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Sentido:</span>
-                            <span id="avg-sense" class="stat-value">0.00</span>
-                        </div>
-                    </div>
-                </div>
-                <!--
-                <div class="control-section">
-                    <h3>📖 Leyenda</h3>
-                    <div class="legend">
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #4CAF50;"></div>
-                            <span>Comida</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #2196F3;"></div>
-                            <span>Blobs (Tamaño proporcional)</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #FF9800;"></div>
-                            <span>Rango de detección</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #FFD700;"></div>
-                            <span>🍎 Comida recolectada</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="control-section">
-                    <h3>ℹ️ Información</h3>
-                    <div class="info-text">
-                        <p><strong>Supervivencia:</strong></p>
-                        <ul>
-                            <li>0 comida = Muerte 💀</li>
-                            <li>1 comida = Sobrevive ✅</li>
-                            <li>2+ comida = Se replica 🧬</li>
-                        </ul>
-                        <p style="margin-top: 10px;"><strong>Mecánicas:</strong></p>
-                        <ul>
-                            <li>Velocidad: Más rápido, más energía</li>
-                            <li>Tamaño: Puede comer otros (+20%)</li>
-                            <li>Sentido: Mayor rango detección</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
--->
-                <!-- Canvas de simulación -->
+            <!-- CANVAS -->
+            <section class="canvas-wrapper">
                 <div class="canvas-container">
                     <canvas id="simulation-canvas" width="800" height="600"></canvas>
                     <div id="progress-bar" class="progress-bar">
@@ -125,10 +71,12 @@
                         <span id="progress-text" class="progress-text">Día 0 - 0%</span>
                     </div>
                 </div>
-            </div>
-        </div>
+            </section>
 
-        <script src="simulation.js"></script>
+        </div>
+    </div>
+
+    <script src="simulation.js"></script>
 </body>
 
 </html>

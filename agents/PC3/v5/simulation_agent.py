@@ -275,7 +275,7 @@ class SimulationAgent(Agent):
         self._spawn_food()
         
         print(f"Sobrevivieron: {survived} | Murieron: {died} | Se replicaron: {replicated}")
-        print(f"👥 Población: {len(self.blobs)}")
+        print(f"Población: {len(self.blobs)}")
         
         # Si la población está extinta, reiniciar con población FIJA
         if len(self.blobs) == 0:

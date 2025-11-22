@@ -77,7 +77,7 @@ class WebServer:
         server_address = ('', WEB_PORT)
         self.server = HTTPServer(server_address, SimulationHTTPHandler)
         
-        print(f"Servidor iniciado en http://localhost:{WEB_PORT}/PC3/v5/")
+        print(f"Servidor iniciado")
         
         try:
             self.server.serve_forever()

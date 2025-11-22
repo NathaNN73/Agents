@@ -13,7 +13,7 @@ const UPDATE_INTERVAL = 100; // ms entre actualizaciones
 
 // Inicializar
 window.addEventListener('load', () => {
-    console.log('🚀 Interfaz cargada');
+    console.log('Interfaz cargada');
     startPolling();
     animate();
 });

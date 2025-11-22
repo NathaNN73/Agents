@@ -19,7 +19,7 @@ async def main():
     web_server.start_in_thread()
     
     print("✅ SIMULACIÓN INICIADA")
-    print(f"Interfaz web disponible en: http://localhost:{WEB_PORT}/PC3/v5/")
+    print(f"Interfaz web disponible en: http://localhost:{WEB_PORT}/agents/PC3/v5/")
     print()
     print("Ctrl+C para detener simulación")
     print()

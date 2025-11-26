@@ -9,10 +9,10 @@ from config import *
 
 
 class SimulationBehaviour(CyclicBehaviour):
-    """Comportamiento cíclico que actualiza la simulación"""
+    # Comportamiento cíclico que actualiza la simulación
     
     async def run(self):
-        # Esperar según la velocidad de simulación
+        # Espera según la velocidad de simulación
         await asyncio.sleep(self.agent.step_delay)
         
         if self.agent.paused:
@@ -49,16 +49,16 @@ class SimulationAgent(Agent):
         }
         
     async def setup(self):
-        """Inicializa el agente y la simulación"""
-        print("Agente de simulación iniciado")
+        # Inicializa el agente y la simulación
+        print("Agente iniciado")
         
-        # Crear población inicial FIJA
+        # Crea población inicial FIJA
         self._create_initial_population()
         
-        # Generar comida del primer día
+        # Genera comida del primer día
         self._spawn_food()
         
-        # Agregar comportamiento cíclico
+        # Agrega comportamiento cíclico
         behaviour = SimulationBehaviour()
         self.add_behaviour(behaviour)
         
@@ -82,16 +82,16 @@ class SimulationAgent(Agent):
                 x, y = random.uniform(50, MAP_WIDTH - 50), MAP_HEIGHT - 10
             elif edge == 'left':
                 x, y = 10, random.uniform(50, MAP_HEIGHT - 50)
-            else:  # right
+            else:
                 x, y = MAP_WIDTH - 10, random.uniform(50, MAP_HEIGHT - 50)
             
-            # Crear blobs
+            # Crea blobs
             blob = Blob(x, y, speed=initial_speed, size=initial_size, sense=initial_sense)
             self.blobs.append(blob)
             self.stats['total_born'] += 1
     
     def _spawn_food(self):
-        """Genera comida aleatoria en el mapa"""
+        # Genera comida aleatoria en el mapa
         self.food = []
         for _ in range(FOOD_PER_DAY):
             food = {
@@ -102,25 +102,25 @@ class SimulationAgent(Agent):
             self.food.append(food)
     
     async def update_simulation(self):
-        """Actualiza el estado de la simulación en un paso de tiempo"""
+        # Actualiza el estado de la simulación en un paso de tiempo
         # Incremento basado en la velocidad del multiplicador
         self.time_in_day += 1 * self.speed_multiplier
         
-        # Verificar fin del día por tiempo
+        # Verifica fin del día por tiempo
         if self.time_in_day >= self.day_duration:
             await self._end_day()
             return
         
-        # Actualizar cada blob
+        # Actualiza cada blob
         for blob in self.blobs:
             if not blob.alive:
                 continue
             
-            # Fase 1: Buscar comida o cazar
+            # Fase 1: Busca comida o caza
             if not blob.at_home:
                 await self._update_blob_behaviour(blob)
         
-        # Verificar si todos los blobs están en casa o muertos (terminar día anticipadamente)
+        # Verifica si todos los blobs están en casa o muertos para terminar día anticipadamente
         all_done = True
         for blob in self.blobs:
             if blob.alive and not blob.at_home:
@@ -132,14 +132,13 @@ class SimulationAgent(Agent):
             await self._end_day()
             return
         
-        # Actualizar estadísticas
+        # Actualiza estadísticas
         self._update_stats()
     
     async def _update_blob_behaviour(self, blob: Blob):
-        """Actualiza el comportamiento de un blob individual"""
+        # Actualiza el comportamiento de un blob individual
         
-        # PRIORIDAD 1: Si tiene comida o poca energía, volver a casa
-        #if blob.food_collected >= 2 or blob.energy < BASE_ENERGY * 0.4:
+        # PRIORIDAD 1: Si tiene comida o poca energía, vuelve a casa
         if blob.food_collected >= 2 or blob.energy < BASE_ENERGY * 0.4:
             blob.move_towards(blob.home_x, blob.home_y, 1.0)
             
@@ -147,7 +146,7 @@ class SimulationAgent(Agent):
                 blob.at_home = True
             return
         
-        # PRIORIDAD 2: Detectar amenazas (blobs más grandes)
+        # PRIORIDAD 2: Detecta amenazas (blobs más grandes)
         threat = None
         for other in self.blobs:
             if other.id == blob.id or not other.alive:
@@ -159,7 +158,7 @@ class SimulationAgent(Agent):
                 threat = other
                 break
         
-        # Si hay amenaza, huir
+        # Si hay amenaza, huye
         if threat:
             # Dirección opuesta
             dx = blob.x - threat.x
@@ -180,7 +179,7 @@ class SimulationAgent(Agent):
                 blob.move_towards(flee_x, flee_y, 1.0)
             return
         
-        # PRIORIDAD 3: Detectar presa (blobs más pequeños)
+        # PRIORIDAD 3: Detecta presa (blobs más pequeños)
         prey_info = blob.detect_nearest(self.blobs, 'blob')
         if prey_info:
             _, _, prey = prey_info
@@ -194,7 +193,7 @@ class SimulationAgent(Agent):
                     blob.eat_blob(prey)
                 return
         
-        # PRIORIDAD 4: Detectar comida
+        # PRIORIDAD 4: Detecta comida
         available_food = [f for f in self.food if not f['consumed']]
         food_info = blob.detect_nearest(available_food, 'food')
         
@@ -217,13 +216,13 @@ class SimulationAgent(Agent):
             blob.move_towards(blob.target_x, blob.target_y, 1.0)
     
     async def _end_day(self):
-        """Finaliza el día y procesa supervivencia/replicación"""
+        # Finaliza el día y procesa supervivencia/replicación
         self.day += 1
         self.time_in_day = 0.0
         
         print(f"\n🌅 Día {self.day} completado")
         
-        # Procesar cada blob
+        # Procesa cada blob
         new_blobs = []
         survived = 0
         died = 0
@@ -235,14 +234,14 @@ class SimulationAgent(Agent):
                 self.stats['total_died'] += 1
                 continue
             
-            # Verificar si regresó a casa
+            # Verifica si regresó a casa
             if not blob.at_home:
                 blob.alive = False
                 died += 1
                 self.stats['total_died'] += 1
                 continue
             
-            # Procesar según comida recolectada
+            # Procesa según comida recolectada
             if blob.food_collected == 0:
                 blob.alive = False
                 died += 1
@@ -263,7 +262,7 @@ class SimulationAgent(Agent):
                 blob.at_home = False
                 new_blobs.append(blob)
                 
-                # Crear descendiente si no se excede la capacidad
+                # Crea descendiente si no se excede la capacidad
                 if len(new_blobs) < MAX_POPULATION:
                     offspring = blob.replicate()
                     new_blobs.append(offspring)
@@ -277,14 +276,14 @@ class SimulationAgent(Agent):
         print(f"Sobrevivieron: {survived} | Murieron: {died} | Se replicaron: {replicated}")
         print(f"Población: {len(self.blobs)}")
         
-        # Si la población está extinta, reiniciar con población FIJA
+        # Si la población está extinta, reinicia
         if len(self.blobs) == 0:
             print(f"Población extinta. Reiniciando con {INITIAL_POPULATION} blobs...")
             self._create_initial_population()
             self.day = 0
     
     def _update_stats(self):
-        """Actualiza las estadísticas de la simulación"""
+        # Actualiza las estadísticas de la simulación
         if len(self.blobs) == 0:
             return
         
@@ -297,7 +296,7 @@ class SimulationAgent(Agent):
             self.stats['population'] = len(alive_blobs)
     
     def get_state(self) -> dict:
-        """Obtiene el estado actual de la simulación para la GUI"""
+        # Obtiene el estado actual de la simulación
         return {
             'day': self.day,
             'time_in_day': self.time_in_day,
@@ -310,12 +309,12 @@ class SimulationAgent(Agent):
         }
     
     def set_speed(self, speed: float):
-        """Establece la velocidad de la simulación"""
+        # Establece la velocidad de la simulación
         self.speed_multiplier = max(0.1, min(10.0, speed))
         # Ajustar delay inversamente proporcional a la velocidad
         self.step_delay = 0.1 / self.speed_multiplier
     
     def toggle_pause(self):
-        """Pausa/reanuda la simulación"""
+        # Pausa/reanuda la simulación
         self.paused = not self.paused
         return self.paused

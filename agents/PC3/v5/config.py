@@ -11,25 +11,25 @@ FOOD_PER_DAY = 40
 MUTATION_RATE = 0.1  # 10% de probabilidad de mutación
 MUTATION_STRENGTH = 0.15  # ±15% de cambio en el rasgo
 
-# Rangos iniciales de rasgos (AJUSTADOS para movimiento más visible)
-SPEED_RANGE = (2.0, 5.0)  # Velocidades más altas
+# Rangos iniciales de rasgos
+SPEED_RANGE = (2.0, 5.0)
 SIZE_RANGE = (0.5, 2.0)
-SENSE_RANGE = (80.0, 180.0)  # Mayor rango de detección
+SENSE_RANGE = (80.0, 180.0)
 
-# Parámetros de energía (AJUSTADOS para días más largos)
-BASE_ENERGY = 1000.0  # Más energía inicial
+# Parámetros de energía
+BASE_ENERGY = 1000.0
 FOOD_ENERGY = 200.0
-BLOB_ENERGY = 500.0  # Energía al comer otro blob
+BLOB_ENERGY = 500.0 
 
 # Parámetros de comportamiento
-SIZE_EAT_THRESHOLD = 1.2  # 20% más grande para poder comer
+SIZE_EAT_THRESHOLD = 1.2
 FLEE_DISTANCE_MULTIPLIER = 1.5
 
 # Servidor web
 WEB_PORT = 10000
 
 
-# XMPP (SPADE) - Configuración básica
+# XMPP (SPADE)
 XMPP_SERVER = "localhost"
 AGENT_JID = "z3r007@xmpp.jp"
 AGENT_PASSWORD = "12356890"

@@ -73,7 +73,7 @@ class WebServer:
         self.server = None
         
     def run(self):
-        """Inicia el servidor HTTP"""
+        # Inicia el servidor HTTP
         server_address = ('', WEB_PORT)
         self.server = HTTPServer(server_address, SimulationHTTPHandler)
         
@@ -85,7 +85,7 @@ class WebServer:
             pass
     
     def start_in_thread(self):
-        """Inicia el servidor en un hilo separado"""
+        # Inicia el servidor en un hilo separado
         thread = Thread(target=self.run, daemon=True)
         thread.start()
         return thread

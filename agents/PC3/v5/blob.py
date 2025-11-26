@@ -40,22 +40,20 @@ class Blob:
         self.fleeing = False
         
     def get_energy_cost_per_step(self) -> float:
-        """Calcula el costo de energía por paso de tiempo"""
+        # Costo de energía por paso de tiempo
         movement_cost = (self.size ** 3) * (self.speed ** 2)
         sense_cost = self.sense
         return movement_cost + sense_cost
     
     def can_reach_distance(self) -> float:
-        """Calcula la distancia máxima que puede recorrer con su energía actual"""
+        # Distancia máxima que puede recorrer con su energía actual
         cost_per_step = self.get_energy_cost_per_step()
         if cost_per_step == 0:
             return float('inf')
         return self.energy / cost_per_step
     
     def move_towards(self, target_x: float, target_y: float, dt: float = 1.0):
-        """
-        Mueve el blob hacia un objetivo
-        """
+       # Mueve el blob hacia un objetivo
         if not self.alive:
             return
             
@@ -73,23 +71,23 @@ class Blob:
         dy /= distance
         
         # Mover según velocidad
-        move_distance = self.speed  # Movimiento directo basado en velocidad
+        move_distance = self.speed
         actual_distance = min(move_distance, distance)
         
         self.x += dx * actual_distance
         self.y += dy * actual_distance
         
-        # Consumir energía (costo reducido)
-        energy_cost = self.get_energy_cost_per_step() * 0.05  # ¡5% del costo original!
+        # Consumir energía
+        energy_cost = self.get_energy_cost_per_step() * 0.05  # 5% del costo original
         self.energy -= energy_cost
         
         if self.energy <= 0:
             self.alive = False
     
     def detect_nearest(self, entities: list, entity_type: str = 'food') -> Optional[Tuple[float, float, object]]:
-        """
-        Detecta la entidad más cercana dentro del rango de sentido
-        """
+
+        # etecta la entidad más cercana dentro del rango de sentido
+
         nearest = None
         nearest_dist = self.sense
         
@@ -113,30 +111,27 @@ class Blob:
         return nearest
     
     def can_eat(self, other_blob: 'Blob') -> bool:
-        """Verifica si este blob puede comer a otro"""
+        # Verifica si este blob puede comer a otro
         return self.size >= other_blob.size * SIZE_EAT_THRESHOLD
     
     def eat_food(self):
-        """Consume una pieza de comida"""
+        # Consume pieza de comida
         self.food_collected += 1
         self.energy += FOOD_ENERGY
     
     def eat_blob(self, other_blob: 'Blob'):
-        """Consume otro blob"""
+        # Consume otro blob
         self.food_collected += 2  # Equivalente a 2 piezas de comida
         self.energy += BLOB_ENERGY
         other_blob.alive = False
     
     def return_home(self):
-        """Verifica si el blob está en casa"""
+        # Verifica si el blob está en casa
         dist_home = math.sqrt((self.x - self.home_x)**2 + (self.y - self.home_y)**2)
         return dist_home < 5.0
     
     def replicate(self) -> 'Blob':
-        """
-        Crea una copia del blob con posible mutación
-        """
-        # Aplicar mutaciones
+        # Crea una copia del blob con posible mutación
         new_speed = self._mutate(self.speed, *SPEED_RANGE)
         new_size = self._mutate(self.size, *SIZE_RANGE)
         new_sense = self._mutate(self.sense, *SENSE_RANGE)
@@ -154,9 +149,7 @@ class Blob:
         return offspring
     
     def _mutate(self, value: float, min_val: float, max_val: float) -> float:
-        """
-        Aplica mutación a un valor
-        """
+        # Aplica mutación a un valor
         if random.random() < MUTATION_RATE:
             change = value * MUTATION_STRENGTH * random.choice([-1, 1])
             new_value = value + change
@@ -164,7 +157,7 @@ class Blob:
         return value
     
     def to_dict(self) -> dict:
-        """Convierte el blob a diccionario para serialización"""
+        # Convierte el blob a diccionario para serialización
         return {
             'id': self.id,
             'x': self.x,

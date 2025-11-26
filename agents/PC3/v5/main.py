@@ -6,25 +6,24 @@ from config import *
 
 
 async def main():
-    """Función principal que coordina la simulación"""
     print("🧬 SIMULACIÓN DE SELECCIÓN NATURAL")
     
-    # Crear agente de simulación
+    # Crea agente
     print("Inicializando agente de simulación...")
     agent = SimulationAgent(AGENT_JID, AGENT_PASSWORD)
     await agent.setup()
     
-    # Crear y arrancar servidor web en hilo separado
+    # Crear y arranca servidor web en hilo separado
     web_server = WebServer(agent)
     web_server.start_in_thread()
     
     print("✅ SIMULACIÓN INICIADA")
-    print(f"Interfaz web disponible en: http://localhost:{WEB_PORT}/agents/PC3/v5/")
+    print(f"Interfaz web disponible en: http://localhost:{WEB_PORT}")
     print()
     print("Ctrl+C para detener simulación")
     print()
     
-    # Ejecutar la simulación
+    # Ejecuta la simulación
     try:
         behaviour = agent.behaviours[0] if agent.behaviours else None
         

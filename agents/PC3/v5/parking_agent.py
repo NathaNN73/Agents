@@ -8,6 +8,7 @@ from vehicle import Vehicle
 from config import *
 from pathfinding import PathfindingGrid, AStarPathfinder
 from lane_network import LaneNetwork
+from control_zones import ControlZones
 
 class ParkingBehaviour(CyclicBehaviour):
     async def run(self):
@@ -32,6 +33,9 @@ class ParkingAgent(Agent):
         # Red de pistas para navegación realista
         self.lane_network = LaneNetwork()
         
+        # Sistema de zonas de control (entrada/validación/salida)
+        self.control_zones = ControlZones()
+        
         # Sistema de pathfinding dinámico con restricción a pistas
         self.pathfinding_grid = PathfindingGrid(MAP_WIDTH, MAP_HEIGHT, cell_size=10, lane_network=self.lane_network)
         self.pathfinder = AStarPathfinder(self.pathfinding_grid)
@@ -51,6 +55,7 @@ class ParkingAgent(Agent):
             'spots_free': TOTAL_SPOTS,
             'spots_occupied': 0,
             'vehicles_waiting': 0,
+            'total_rejected': 0,
             'path_recalculations': 0
         }
         
@@ -289,14 +294,17 @@ class ParkingAgent(Agent):
             self.last_spawn_time = self.simulation_time
     
     async def _spawn_vehicle(self, vehicle_type: str):
-        """Genera un nuevo vehículo en el punto de entrada"""
-        entry_x = self.parking_layout['entry_x']
-        entry_y = self.parking_layout['entry_y']
+        """Genera un nuevo vehículo en una zona de entrada aleatoria"""
+        # Seleccionar zona de entrada aleatoria
+        entry_zone = self.control_zones.get_random_entry_zone()
+        entry_x = entry_zone['x']
+        entry_y = entry_zone['y']
         
-        # Crear vehículo en el punto de entrada (arriba-izquierda)
+        # Crear vehículo en la zona de entrada
         vehicle = Vehicle(entry_x, entry_y, vehicle_type)
         vehicle.arrival_time = self.simulation_time
-        vehicle.state = "ENTERING"  # Nuevo estado para entrada
+        vehicle.state = "ENTERING"  # Estado inicial
+        vehicle.entry_lane = entry_zone['lane']  # Recordar por qué pista entró
         vehicle.stuck_counter = 0  # Contador para detectar bloqueos
         vehicle.last_position = (entry_x, entry_y)
         vehicle.path_recalc_timer = 0
@@ -341,8 +349,23 @@ class ParkingAgent(Agent):
                 vehicle.state = "ARRIVING"
                 vehicle.stuck_counter = 0
         
+        elif vehicle.state == "ENTERING":
+            # Verificar si llegó a la zona de validación (franja verde)
+            if self.control_zones.is_in_validation_zone(vehicle.x, vehicle.y):
+                # Validar si hay espacios disponibles
+                spot = self._assign_spot(vehicle)
+                if spot:
+                    # Hay espacio disponible, asignar y continuar
+                    vehicle.state = "ARRIVING"
+                else:
+                    # NO hay espacio, regresar por donde vino
+                    vehicle.state = "REJECTED"
+                    print(f"🚫 Vehículo {vehicle.id}: Sin espacios disponibles, regresando...")
+                    self.stats['total_rejected'] = self.stats.get('total_rejected', 0) + 1
+        
         elif vehicle.state == "ARRIVING":
-            spot = self._assign_spot(vehicle)
+            # Ya fue validado y tiene espacio asignado
+            spot = self.parking_spots.get(vehicle.assigned_spot)
             if spot:
                 vehicle.assigned_spot = spot['id']
                 vehicle.spot_x = spot['x']
@@ -385,12 +408,28 @@ class ParkingAgent(Agent):
                 total_time = self.simulation_time - vehicle.arrival_time
                 self.parking_times.append(total_time)
         
+
+        elif vehicle.state == "REJECTED":
+            # Vehículo rechazado, regresar a la salida de su pista
+            exit_zone = self.control_zones.get_exit_zone_for_lane(vehicle.entry_lane)
+            exit_x = exit_zone['x']
+            exit_y = exit_zone['y']
+            
+            # Moverse hacia la salida
+            arrived = vehicle.move_towards(exit_x, exit_y)
+            if arrived or vehicle.x < 0:
+                vehicle.active = False
+                self.vehicles.remove(vehicle)
         elif vehicle.state == "LEAVING":
-            exit_x = self.parking_layout['exit_x']
-            exit_y = self.parking_layout['exit_y']
+            # Usar zona de salida aleatoria
+            import random
+            exit_zone = random.choice(self.control_zones.exit_zones)
+            exit_x = exit_zone['x']
+            exit_y = exit_zone['y']
+            
             arrived = vehicle.move_towards(exit_x, exit_y)
             
-            if arrived:
+            if arrived or vehicle.x >= MAP_WIDTH - 10:
                 vehicle.active = False
                 self.vehicles.remove(vehicle)
                 self.stats['total_left'] += 1
@@ -502,6 +541,7 @@ class ParkingAgent(Agent):
             'simulation_time': self.simulation_time,
             'vehicles': [v.to_dict() for v in self.vehicles if v.active],
             'parking_spots': list(self.parking_spots.values()),
+            'control_zones': self.control_zones.get_all_zones(),
             'stats': self.stats,
             'paused': self.paused,
             'speed': self.speed_multiplier,

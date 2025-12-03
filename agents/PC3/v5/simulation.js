@@ -41,6 +41,11 @@ function render(data) {
     // Dibujar carriles/pasillos primero (fondo)
     drawParkingLanes();
 
+    // Dibujar zonas de control (validación y salida)
+    if (data.control_zones) {
+        drawControlZones(data.control_zones);
+    }
+    
     // Dibujar plazas de estacionamiento
     if (data.parking_spots) {
         data.parking_spots.forEach(spot => {
@@ -243,6 +248,57 @@ function drawParkingLanes() {
 }
 
 
+
+function drawControlZones(zones) {
+    if (!zones) return;
+    
+    // Dibujar zonas de validación (verdes)
+    if (zones.validation) {
+        zones.validation.forEach(zone => {
+            ctx.fillStyle = 'rgba(34, 197, 94, 0.4)'; // Verde semi-transparente
+            ctx.fillRect(
+                zone.x - zone.width / 2,
+                zone.y - zone.height / 2,
+                zone.width,
+                zone.height
+            );
+            
+            // Borde verde
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(
+                zone.x - zone.width / 2,
+                zone.y - zone.height / 2,
+                zone.width,
+                zone.height
+            );
+        });
+    }
+    
+    // Dibujar zonas de salida (rojas)
+    if (zones.exit) {
+        zones.exit.forEach(zone => {
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.4)'; // Rojo semi-transparente
+            ctx.fillRect(
+                zone.x - zone.width / 2,
+                zone.y - zone.height / 2,
+                zone.width,
+                zone.height
+            );
+            
+            // Borde rojo
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(
+                zone.x - zone.width / 2,
+                zone.y - zone.height / 2,
+                zone.width,
+                zone.height
+            );
+        });
+    }
+}
+
 function drawEntranceExit() {
     // Entrada (izquierda)
     ctx.fillStyle = '#22c55e';
@@ -279,6 +335,18 @@ function updateStats(data) {
     document.getElementById('statArrived').textContent = stats.total_arrived || 0;
     document.getElementById('statParked').textContent = stats.total_parked || 0;
     document.getElementById('statLeft').textContent = stats.total_left || 0;
+    
+    // Mostrar vehículos rechazados si existe la estadística
+    if (stats.total_rejected !== undefined) {
+        if (!document.getElementById('statRejected')) {
+            // Crear elemento si no existe
+            const rejectedStat = document.createElement('div');
+            rejectedStat.className = 'stat-item';
+            rejectedStat.innerHTML = '<span class="stat-label">🚫 Rechazados:</span><span class="stat-value" id="statRejected">0</span>';
+            document.querySelector('.metrics-panel').appendChild(rejectedStat);
+        }
+        document.getElementById('statRejected').textContent = stats.total_rejected || 0;
+    }
 
     document.getElementById('statSearchTime').textContent =
         stats.avg_search_time ? stats.avg_search_time.toFixed(2) + 's' : '0.0s';

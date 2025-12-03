@@ -50,6 +50,9 @@ class Vehicle:
         self.stuck_counter = 0
         self.last_position = (x, y)
         self.path_recalc_timer = 0.0
+        
+        # Pista de entrada (para saber por dónde salir si es rechazado)
+        self.entry_lane = "middle"  # Default
     
     def set_waypoints(self, waypoints: List[Tuple[float, float]]):
         """Establece la ruta de waypoints a seguir"""

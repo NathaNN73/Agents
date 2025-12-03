@@ -15,8 +15,8 @@
             <div class="status" id="status">Conectando...</div>
         </header>
 
-        <div class="main-content">
-            <aside class="sidebar">
+        <div class="main-content" style="display: flex; flex-direction: row; flex: 1; overflow: hidden;">
+            <aside class="sidebar" style="width: 260px; flex-shrink: 0;">
                 <div class="control-panel">
                     <h2>⚙️ Control</h2>
                     <button id="pauseBtn" class="btn btn-primary">⏸️ Pausar</button>
@@ -86,35 +86,15 @@
                 </div>
             </aside>
 
-            <main class="simulation-area">
-                <canvas id="simulationCanvas" width="800" height="600"></canvas>
-                <div class="legend">
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #4ade80;"></div>
-                        <span>Plaza Libre</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #ef4444;"></div>
-                        <span>Plaza Ocupada</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #fbbf24;"></div>
-                        <span>Plaza Reservada</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #3b82f6;"></div>
-                        <span>Vehículo Normal</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #8b5cf6;"></div>
-                        <span>Vehículo Especial</span>
-                    </div>
-                </div>
+            <main class="simulation-area"
+                style="flex: 1; display: flex; justify-content: center; align-items: center; padding: 0 2rem;"
+                align="center">
+                <canvas id="simulationCanvas" width="800" height="600" align="center"></canvas>
             </main>
         </div>
     </div>
 
-    <script src="simulation.js"></script>
+    <script src="simulation.js?v=5"></script>
 </body>
 
 </html>

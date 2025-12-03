@@ -50,7 +50,7 @@ class ControlZones:
         ]
         
         # ZONAS DE VALIDACIÓN (franjas verdes) - Antes de entrar al área de parking
-        validation_x = 180  # Justo antes del área de plazas
+        validation_x = 120  # Más cerca del borde para reducir área de entrada
         self.validation_zones = [
             {
                 'id': 0,
@@ -85,7 +85,7 @@ class ControlZones:
         ]
         
         # ZONAS DE SALIDA (franjas rojas) - Extremo derecho de cada pista
-        exit_x = MAP_WIDTH - 30
+        exit_x = MAP_WIDTH - 10
         self.exit_zones = [
             {
                 'id': 0,

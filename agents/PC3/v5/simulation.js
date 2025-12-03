@@ -45,7 +45,7 @@ function render(data) {
     if (data.control_zones) {
         drawControlZones(data.control_zones);
     }
-    
+
     // Dibujar plazas de estacionamiento
     if (data.parking_spots) {
         data.parking_spots.forEach(spot => {
@@ -99,20 +99,8 @@ function drawParkingSpot(spot) {
     ctx.textBaseline = 'middle';
     ctx.fillText(spot.id, spot.x, y + 9);
 
-    // Indicador de tipo especial (movido más abajo)
-    if (spot.type === 'discapacitado') {
-        ctx.fillStyle = '#fff';
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('♿', spot.x, spot.y + 8);
-    } else if (spot.type === 'electrico') {
-        ctx.fillStyle = '#fff';
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('⚡', spot.x, spot.y + 8);
-    }
+    // Símbolos de tipo especial removidos para visualización más limpia
+    // La lógica de tipos especiales se mantiene en el backend
 }
 
 function drawVehicle(vehicle) {
@@ -179,15 +167,15 @@ function drawVehicle(vehicle) {
 }
 
 function drawParkingLanes() {
-    const aisleColor = '#475569'; // Gris asfalto
+    const aisleColor = '#334155'; // Gris asfalto más oscuro (antes #475569)
     const lineColor = '#f1f5f9';
-    
+
     // 1. PASILLO HORIZONTAL SUPERIOR (nuevo)
     const topAisleY = 75;
     const topAisleHeight = 50;
     ctx.fillStyle = aisleColor;
     ctx.fillRect(0, topAisleY - topAisleHeight / 2, canvas.width, topAisleHeight);
-    
+
     // Línea central del pasillo superior
     ctx.strokeStyle = lineColor;
     ctx.lineWidth = 2;
@@ -197,13 +185,13 @@ function drawParkingLanes() {
     ctx.lineTo(canvas.width, topAisleY);
     ctx.stroke();
     ctx.setLineDash([]);
-    
+
     // 2. PASILLO HORIZONTAL PRINCIPAL (centro)
     const mainAisleY = canvas.height / 2;
     const mainAisleHeight = 60;
     ctx.fillStyle = aisleColor;
     ctx.fillRect(0, mainAisleY - mainAisleHeight / 2, canvas.width, mainAisleHeight);
-    
+
     // Línea central del pasillo principal
     ctx.strokeStyle = lineColor;
     ctx.lineWidth = 2;
@@ -213,13 +201,13 @@ function drawParkingLanes() {
     ctx.lineTo(canvas.width, mainAisleY);
     ctx.stroke();
     ctx.setLineDash([]);
-    
+
     // 3. PASILLO HORIZONTAL INFERIOR (nuevo)
     const bottomAisleY = canvas.height - 75;
     const bottomAisleHeight = 50;
     ctx.fillStyle = aisleColor;
     ctx.fillRect(0, bottomAisleY - bottomAisleHeight / 2, canvas.width, bottomAisleHeight);
-    
+
     // Línea central del pasillo inferior
     ctx.strokeStyle = lineColor;
     ctx.lineWidth = 2;
@@ -232,16 +220,18 @@ function drawParkingLanes() {
 
     // 4. PASILLOS VERTICALES (entre columnas)
     const rowsStartX = 200;
-    const rowSpacing = (canvas.width - rowsStartX - 100) / 6; // 6 columnas (más espacio)
+    const rowSpacing = (canvas.width - rowsStartX - 50) / 5; // 5 columnas - sincronizado con backend
 
-    for (let i = 0; i <= 6; i++) {
+    
+        for (let i = 0; i <= 5; i++) {
         const x = rowsStartX + i * rowSpacing;
 
         // Pasillo vertical completo (de arriba a abajo)
         ctx.fillStyle = aisleColor;
-        ctx.fillRect(x - 25, 50, 50, canvas.height - 100);
+        ctx.fillRect(x - 17.5, 50, 35, canvas.height - 100); // Ancho = ancho de plazas
     }
-    
+
+
     // 5. PASILLO DE ENTRADA (vertical desde arriba-izquierda)
     ctx.fillStyle = aisleColor;
     ctx.fillRect(50 - 20, 50, 40, 50); // Conecta con el pasillo superior
@@ -251,7 +241,7 @@ function drawParkingLanes() {
 
 function drawControlZones(zones) {
     if (!zones) return;
-    
+
     // Dibujar zonas de validación (verdes)
     if (zones.validation) {
         zones.validation.forEach(zone => {
@@ -262,7 +252,7 @@ function drawControlZones(zones) {
                 zone.width,
                 zone.height
             );
-            
+
             // Borde verde
             ctx.strokeStyle = '#22c55e';
             ctx.lineWidth = 3;
@@ -274,7 +264,7 @@ function drawControlZones(zones) {
             );
         });
     }
-    
+
     // Dibujar zonas de salida (rojas)
     if (zones.exit) {
         zones.exit.forEach(zone => {
@@ -285,7 +275,7 @@ function drawControlZones(zones) {
                 zone.width,
                 zone.height
             );
-            
+
             // Borde rojo
             ctx.strokeStyle = '#ef4444';
             ctx.lineWidth = 3;
@@ -301,17 +291,13 @@ function drawControlZones(zones) {
 
 function drawEntranceExit() {
     // Entrada (izquierda)
-    ctx.fillStyle = '#22c55e';
-    ctx.fillRect(5, canvas.height / 2 - 30, 10, 60);
-    ctx.fillStyle = '#fff';
-    ctx.font = '12px Arial';
+    ctx.fillStyle = '#eb6b03ff';
+    ctx.font = '18px Arial Black';
     ctx.textAlign = 'left';
     ctx.fillText('ENTRADA', 20, canvas.height / 2);
 
     // Salida (derecha)
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(canvas.width - 15, canvas.height / 2 - 30, 10, 60);
-    ctx.fillStyle = '#fff';
+    ctx.fillStyle = '#eb6b03ff';
     ctx.textAlign = 'right';
     ctx.fillText('SALIDA', canvas.width - 20, canvas.height / 2);
 }
@@ -335,7 +321,7 @@ function updateStats(data) {
     document.getElementById('statArrived').textContent = stats.total_arrived || 0;
     document.getElementById('statParked').textContent = stats.total_parked || 0;
     document.getElementById('statLeft').textContent = stats.total_left || 0;
-    
+
     // Mostrar vehículos rechazados si existe la estadística
     if (stats.total_rejected !== undefined) {
         if (!document.getElementById('statRejected')) {

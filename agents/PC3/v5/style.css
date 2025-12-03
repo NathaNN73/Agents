@@ -8,7 +8,7 @@
     --light: #e3f2fd;
     --text-light: #ffffff;
     --text-muted: #bbdefb;
-    --sidebar-width: 280px;
+    --sidebar-width: 220px;  /* Reducido para dar más espacio al canvas */
     --header-height: 70px;
     --canvas-border-radius: 16px;
 }
@@ -197,11 +197,12 @@ header h1 {
 .canvas-wrapper {
     flex: 1;
     display: flex;
-    justify-content: center;
+    justify-content: flex-end;  /* Alineado a la derecha */
     align-items: center;
     background: radial-gradient(circle at center, rgba(30, 50, 120, 0.4), transparent 70%);
     position: relative;
     overflow: hidden;
+    padding-right: 2rem;  /* Margen derecho */
 }
 
 .canvas-container {
@@ -232,7 +233,7 @@ header h1 {
     height: 22px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;  /* Alineado a la derecha */
     backdrop-filter: blur(4px);
     border: 1px solid rgba(100, 181, 246, 0.3);
 }

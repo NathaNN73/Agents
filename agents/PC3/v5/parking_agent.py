@@ -102,8 +102,8 @@ class ParkingAgent(Agent):
         random.shuffle(special_spots)
         
         # Organizar plazas en filas
-        rows_start_x = self.parking_layout['rows_start_x']
-        row_spacing = (MAP_WIDTH - rows_start_x - 100) / PARKING_COLS
+        rows_start_x = self.parking_layout['rows_start_x']  # Restaurado a 200
+        row_spacing = (MAP_WIDTH - rows_start_x - 50) / PARKING_COLS  # Más espacio entre columnas
         
         # Calcular espaciado vertical mejorado para 4 filas (2 arriba, 2 abajo)
         # Área superior: entre pasillo superior (y=75) y pasillo central (y=300)
@@ -116,14 +116,16 @@ class ParkingAgent(Agent):
             # Alternar lados (arriba y abajo del pasillo principal)
             if row < PARKING_ROWS // 2:
                 # Plazas arriba (2 filas)
-                # Centrar en el área superior
-                y = 75 + 50 + (top_area_height / 3) * (row + 1)
+                # Distribuir uniformemente en el área superior
+                # Para 2 filas: dividir en 3 partes y usar posiciones 1 y 2
+                y = 75 + 25 + top_area_height * (row + 1) / 3
                 side = "top"
             else:
                 # Plazas abajo (2 filas)
-                # Centrar en el área inferior
+                # Distribuir uniformemente en el área inferior
                 adjusted_row = row - PARKING_ROWS // 2
-                y = 300 + 50 + (bottom_area_height / 3) * (adjusted_row + 1)
+                # Para 2 filas: dividir en 3 partes y usar posiciones 1 y 2
+                y = 300 + 25 + bottom_area_height * (adjusted_row + 1) / 3
                 side = "bottom"
             
             for col in range(PARKING_COLS):
@@ -210,8 +212,9 @@ class ParkingAgent(Agent):
         
         # Temporalmente marcar la plaza destino como libre para pathfinding
         # (para que el vehículo pueda planear llegar ahí)
+        # Ajustar posición para centrar el vehículo debajo del número
         target_x = spot['x']
-        target_y = spot['y']
+        target_y = spot['y'] + 8  # Desplazar 8px hacia abajo para quedar debajo del número
         
         # Usar A* para encontrar el camino
         path = self.pathfinder.find_path(
@@ -430,18 +433,49 @@ class ParkingAgent(Agent):
                 vehicle.active = False
                 self.vehicles.remove(vehicle)
         elif vehicle.state == "LEAVING":
-            # Usar zona de salida aleatoria
-            import random
-            exit_zone = random.choice(self.control_zones.exit_zones)
-            exit_x = exit_zone['x']
-            exit_y = exit_zone['y']
+            # Generar ruta de salida si no existe
+            if not hasattr(vehicle, 'exit_route_generated') or not vehicle.exit_route_generated:
+                # Seleccionar zona de salida aleatoria
+                import random
+                exit_zone = random.choice(self.control_zones.exit_zones)
+                exit_x = exit_zone['x']
+                exit_y = exit_zone['y']
+                
+                # Generar ruta con A* hacia la salida
+                self._update_pathfinding_grid()
+                exit_path = self.pathfinder.find_path(
+                    vehicle.x, vehicle.y,
+                    exit_x, exit_y
+                )
+                
+                if exit_path and len(exit_path) > 0:
+                    vehicle.set_waypoints(exit_path)
+                    vehicle.exit_route_generated = True
+                    print(f"🚪 Vehículo {vehicle.id}: Ruta de salida generada ({len(exit_path)} waypoints)")
+                else:
+                    # Fallback: movimiento directo si A* falla
+                    vehicle.exit_route_generated = True
+                    print(f"⚠️ Vehículo {vehicle.id}: Usando ruta directa de salida")
             
-            arrived = vehicle.move_towards(exit_x, exit_y)
+            # Moverse siguiendo la ruta (con pathfinding) o directo (fallback)
+            if len(vehicle.waypoints) > 0:
+                # Usar pathfinding
+                arrived = vehicle.move_along_path(
+                    list(self.parking_spots.values()),
+                    self.vehicles
+                )
+            else:
+                # Fallback: movimiento directo
+                import random
+                exit_zone = random.choice(self.control_zones.exit_zones)
+                arrived = vehicle.move_towards(exit_zone['x'], exit_zone['y'])
             
+            # Verificar si llegó a la salida o salió del mapa
             if arrived or vehicle.x >= MAP_WIDTH - 10:
                 vehicle.active = False
                 self.vehicles.remove(vehicle)
                 self.stats['total_left'] += 1
+                print(f"👋 Vehículo {vehicle.id}: Salió del estacionamiento")
     
     async def _recalculate_path(self, vehicle: Vehicle):
         """Recalcula la ruta de un vehículo atascado"""

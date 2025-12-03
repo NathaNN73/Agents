@@ -32,7 +32,7 @@ ENTRY_POINT_Y = 50
 ASSIGNMENT_STRATEGY = "greedy"  # "greedy", "balanced", "priority"
 
 # Parámetros de comportamiento
-PARKING_TIME_MIN = 200
+PARKING_TIME_MIN = 60
 PARKING_TIME_MAX = 300
 
 # Servidor web

@@ -232,9 +232,9 @@ function drawParkingLanes() {
 
     // 4. PASILLOS VERTICALES (entre columnas)
     const rowsStartX = 200;
-    const rowSpacing = (canvas.width - rowsStartX - 100) / 8; // 8 columnas
+    const rowSpacing = (canvas.width - rowsStartX - 100) / 6; // 6 columnas (más espacio)
 
-    for (let i = 0; i <= 8; i++) {
+    for (let i = 0; i <= 6; i++) {
         const x = rowsStartX + i * rowSpacing;
 
         // Pasillo vertical completo (de arriba a abajo)

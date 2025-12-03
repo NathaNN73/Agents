@@ -2,32 +2,36 @@
 MAP_WIDTH = 800
 MAP_HEIGHT = 600
 
-# Parámetros de población
-INITIAL_POPULATION = 25 
-MAX_POPULATION = 200
-FOOD_PER_DAY = 40
+# Parámetros de parking
+PARKING_ROWS = 5
+PARKING_COLS = 8
+TOTAL_SPOTS = PARKING_ROWS * PARKING_COLS  # 40 plazas
 
-# Parámetros de mutación
-MUTATION_RATE = 0.1  # 10% de probabilidad de mutación
-MUTATION_STRENGTH = 0.15  # ±15% de cambio en el rasgo
+# Tipos de plazas
+SPOTS_DISCAPACITADOS = 3
+SPOTS_ELECTRICOS = 5
 
-# Rangos iniciales de rasgos
-SPEED_RANGE = (2.0, 5.0)
-SIZE_RANGE = (0.5, 2.0)
-SENSE_RANGE = (80.0, 180.0)
+# Layout del parking
+SPOT_WIDTH = 40
+SPOT_HEIGHT = 40
+AISLE_WIDTH = 50  # Ancho de pasillos para vehículos
 
-# Parámetros de energía
-BASE_ENERGY = 1000.0
-FOOD_ENERGY = 200.0
-BLOB_ENERGY = 500.0 
+# Parámetros de vehículos
+INITIAL_VEHICLES = 8
+MAX_VEHICLES = 30
+VEHICLE_ARRIVAL_INTERVAL = 4.0
+VEHICLE_SPEED = 2.5
+VEHICLE_SIZE = 10  # Radio de colisión
+
+# Estrategia de asignación
+ASSIGNMENT_STRATEGY = "greedy"  # "greedy", "balanced", "priority"
 
 # Parámetros de comportamiento
-SIZE_EAT_THRESHOLD = 1.2
-FLEE_DISTANCE_MULTIPLIER = 1.5
+PARKING_TIME_MIN = 30
+PARKING_TIME_MAX = 120
 
 # Servidor web
 WEB_PORT = 10000
-
 
 # XMPP (SPADE)
 XMPP_SERVER = "localhost"

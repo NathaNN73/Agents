@@ -1,5 +1,6 @@
 """
 Sistema de Pathfinding usando A* para navegación dinámica de vehículos
+Modificado para navegación realista solo por pistas/pasillos
 """
 
 import math
@@ -27,17 +28,36 @@ class Node:
         return hash((self.x, self.y))
 
 class PathfindingGrid:
-    """Grid para pathfinding con obstáculos dinámicos"""
+    """Grid para pathfinding con obstáculos dinámicos y restricción a pistas"""
     
-    def __init__(self, width: int, height: int, cell_size: int = 10):
+    def __init__(self, width: int, height: int, cell_size: int = 10, lane_network=None):
         self.width = width
         self.height = height
         self.cell_size = cell_size
         self.grid_width = width // cell_size
         self.grid_height = height // cell_size
+        self.lane_network = lane_network
         
         # Grid de obstáculos (True = bloqueado)
         self.obstacles = [[False for _ in range(self.grid_width)] for _ in range(self.grid_height)]
+        
+        # Marcar áreas fuera de pistas como obstáculos
+        if self.lane_network:
+            self._mark_non_lane_areas()
+    
+    def _mark_non_lane_areas(self):
+        """Marca todas las áreas que NO son pistas como obstáculos"""
+        # Primero marcar todo como obstáculo
+        for gy in range(self.grid_height):
+            for gx in range(self.grid_width):
+                self.obstacles[gy][gx] = True
+        
+        # Luego desmarcar las áreas que SÍ son pistas
+        for gy in range(self.grid_height):
+            for gx in range(self.grid_width):
+                wx, wy = self.grid_to_world(gx, gy)
+                if self.lane_network.is_on_lane(wx, wy, tolerance=0):
+                    self.obstacles[gy][gx] = False
     
     def world_to_grid(self, x: float, y: float) -> Tuple[int, int]:
         """Convierte coordenadas del mundo a coordenadas de grid"""
@@ -61,9 +81,12 @@ class PathfindingGrid:
             return False
         return not self.obstacles[grid_y][grid_x]
     
-    def clear_obstacles(self):
-        """Limpia todos los obstáculos del grid"""
-        self.obstacles = [[False for _ in range(self.grid_width)] for _ in range(self.grid_height)]
+    def clear_dynamic_obstacles(self):
+        """Limpia solo los obstáculos dinámicos (vehículos), mantiene las restricciones de pistas"""
+        if self.lane_network:
+            self._mark_non_lane_areas()
+        else:
+            self.obstacles = [[False for _ in range(self.grid_width)] for _ in range(self.grid_height)]
     
     def add_obstacle(self, x: float, y: float, radius: float = 15):
         """Agrega un obstáculo circular en el grid"""
@@ -191,7 +214,7 @@ class AStarPathfinder:
         # No se encontró camino
         return None
     
-    def _find_nearest_valid(self, gx: int, gy: int, max_radius: int = 5) -> Tuple[Optional[int], Optional[int]]:
+    def _find_nearest_valid(self, gx: int, gy: int, max_radius: int = 10) -> Tuple[Optional[int], Optional[int]]:
         """Encuentra la celda válida más cercana"""
         for radius in range(1, max_radius + 1):
             for dy in range(-radius, radius + 1):

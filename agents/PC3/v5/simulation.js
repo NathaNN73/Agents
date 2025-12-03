@@ -174,15 +174,33 @@ function drawVehicle(vehicle) {
 }
 
 function drawParkingLanes() {
-    // Pasillo principal horizontal (centro)
+    const aisleColor = '#475569'; // Gris asfalto
+    const lineColor = '#f1f5f9';
+    
+    // 1. PASILLO HORIZONTAL SUPERIOR (nuevo)
+    const topAisleY = 75;
+    const topAisleHeight = 50;
+    ctx.fillStyle = aisleColor;
+    ctx.fillRect(0, topAisleY - topAisleHeight / 2, canvas.width, topAisleHeight);
+    
+    // Línea central del pasillo superior
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([10, 5]);
+    ctx.beginPath();
+    ctx.moveTo(0, topAisleY);
+    ctx.lineTo(canvas.width, topAisleY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // 2. PASILLO HORIZONTAL PRINCIPAL (centro)
     const mainAisleY = canvas.height / 2;
-    const aisleHeight = 60;
-
-    ctx.fillStyle = '#475569'; // Gris asfalto
-    ctx.fillRect(0, mainAisleY - aisleHeight / 2, canvas.width, aisleHeight);
-
-    // Líneas del pasillo principal
-    ctx.strokeStyle = '#f1f5f9';
+    const mainAisleHeight = 60;
+    ctx.fillStyle = aisleColor;
+    ctx.fillRect(0, mainAisleY - mainAisleHeight / 2, canvas.width, mainAisleHeight);
+    
+    // Línea central del pasillo principal
+    ctx.strokeStyle = lineColor;
     ctx.lineWidth = 2;
     ctx.setLineDash([10, 5]);
     ctx.beginPath();
@@ -190,22 +208,40 @@ function drawParkingLanes() {
     ctx.lineTo(canvas.width, mainAisleY);
     ctx.stroke();
     ctx.setLineDash([]);
+    
+    // 3. PASILLO HORIZONTAL INFERIOR (nuevo)
+    const bottomAisleY = canvas.height - 75;
+    const bottomAisleHeight = 50;
+    ctx.fillStyle = aisleColor;
+    ctx.fillRect(0, bottomAisleY - bottomAisleHeight / 2, canvas.width, bottomAisleHeight);
+    
+    // Línea central del pasillo inferior
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([10, 5]);
+    ctx.beginPath();
+    ctx.moveTo(0, bottomAisleY);
+    ctx.lineTo(canvas.width, bottomAisleY);
+    ctx.stroke();
+    ctx.setLineDash([]);
 
-    // Pasillos verticales entre columnas
-    const rowsStartX = 100;
+    // 4. PASILLOS VERTICALES (entre columnas)
+    const rowsStartX = 200;
     const rowSpacing = (canvas.width - rowsStartX - 100) / 8; // 8 columnas
 
     for (let i = 0; i <= 8; i++) {
         const x = rowsStartX + i * rowSpacing;
 
-        // Pasillo vertical superior
-        ctx.fillStyle = '#475569';
-        ctx.fillRect(x - 25, 50, 50, mainAisleY - aisleHeight / 2 - 50);
-
-        // Pasillo vertical inferior
-        ctx.fillRect(x - 25, mainAisleY + aisleHeight / 2, 50, canvas.height - mainAisleY - aisleHeight / 2 - 50);
+        // Pasillo vertical completo (de arriba a abajo)
+        ctx.fillStyle = aisleColor;
+        ctx.fillRect(x - 25, 50, 50, canvas.height - 100);
     }
+    
+    // 5. PASILLO DE ENTRADA (vertical desde arriba-izquierda)
+    ctx.fillStyle = aisleColor;
+    ctx.fillRect(50 - 20, 50, 40, 50); // Conecta con el pasillo superior
 }
+
 
 function drawEntranceExit() {
     // Entrada (izquierda)

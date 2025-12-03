@@ -7,6 +7,7 @@ from typing import List, Dict, Optional, Tuple
 from vehicle import Vehicle
 from config import *
 from pathfinding import PathfindingGrid, AStarPathfinder
+from lane_network import LaneNetwork
 
 class ParkingBehaviour(CyclicBehaviour):
     async def run(self):
@@ -28,8 +29,11 @@ class ParkingAgent(Agent):
         self.spawn_queue = []  # Cola de vehículos pendientes de spawn
         self.last_spawn_time = 0.0
         
-        # Sistema de pathfinding dinámico
-        self.pathfinding_grid = PathfindingGrid(MAP_WIDTH, MAP_HEIGHT, cell_size=10)
+        # Red de pistas para navegación realista
+        self.lane_network = LaneNetwork()
+        
+        # Sistema de pathfinding dinámico con restricción a pistas
+        self.pathfinding_grid = PathfindingGrid(MAP_WIDTH, MAP_HEIGHT, cell_size=10, lane_network=self.lane_network)
         self.pathfinder = AStarPathfinder(self.pathfinding_grid)
         
         self.paused = False
@@ -139,7 +143,7 @@ class ParkingAgent(Agent):
     def _update_pathfinding_grid(self):
         """Actualiza el grid de pathfinding con obstáculos dinámicos"""
         # Limpiar grid
-        self.pathfinding_grid.clear_obstacles()
+        self.pathfinding_grid.clear_dynamic_obstacles()
         
         # Agregar plazas ocupadas como obstáculos
         for spot in self.parking_spots.values():

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Estacionamiento Inteligente</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🅿️ Sistema de Estacionamiento Inteligente</h1>
+            <div class="status" id="status">Conectando...</div>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <div class="control-panel">
+                    <h2>⚙️ Control</h2>
+                    <button id="pauseBtn" class="btn btn-primary">⏸️ Pausar</button>
+
+                    <div class="speed-control">
+                        <label>Velocidad: <span id="speedValue">1.0x</span></label>
+                        <input type="range" id="speedSlider" min="0.1" max="3.0" step="0.1" value="1.0">
+                    </div>
+
+                    <div class="preset-buttons">
+                        <button class="btn btn-small" onclick="setSpeed(0.2)">🐌 Lento</button>
+                        <button class="btn btn-small" onclick="setSpeed(1.0)">▶️ Normal</button>
+                        <button class="btn btn-small" onclick="setSpeed(2.0)">⚡ Rápido</button>
+                    </div>
+                </div>
+
+                <div class="stats-panel">
+                    <h2>📊 Estadísticas</h2>
+                    <div class="stat-item">
+                        <span class="stat-label">Tiempo:</span>
+                        <span class="stat-value" id="statTime">0s</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Ocupación:</span>
+                        <span class="stat-value" id="statOccupancy">0%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Plazas Libres:</span>
+                        <span class="stat-value" id="statFree">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Plazas Ocupadas:</span>
+                        <span class="stat-value" id="statOccupied">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Vehículos Esperando:</span>
+                        <span class="stat-value" id="statWaiting">0</span>
+                    </div>
+                </div>
+
+                <div class="metrics-panel">
+                    <h2>📈 Métricas</h2>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Llegados:</span>
+                        <span class="stat-value" id="statArrived">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Estacionados:</span>
+                        <span class="stat-value" id="statParked">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Salidos:</span>
+                        <span class="stat-value" id="statLeft">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Tiempo Búsqueda Prom:</span>
+                        <span class="stat-value" id="statSearchTime">0.0s</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Estrategia:</span>
+                        <span class="stat-value" id="statStrategy">-</span>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="simulation-area">
+                <canvas id="simulationCanvas" width="800" height="600"></canvas>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #4ade80;"></div>
+                        <span>Plaza Libre</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ef4444;"></div>
+                        <span>Plaza Ocupada</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #fbbf24;"></div>
+                        <span>Plaza Reservada</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3b82f6;"></div>
+                        <span>Vehículo Normal</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #8b5cf6;"></div>
+                        <span>Vehículo Especial</span>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="simulation.js"></script>
+</body>
+
+</html>

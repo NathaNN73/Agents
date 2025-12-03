@@ -249,6 +249,9 @@ function updateStats(data) {
 
     document.getElementById('statStrategy').textContent =
         data.strategy || '-';
+
+    // Nueva estadística: Recalculaciones de pathfinding
+    document.getElementById('statRecalcs').textContent = stats.path_recalculations || 0;
 }
 
 // Control de pausa

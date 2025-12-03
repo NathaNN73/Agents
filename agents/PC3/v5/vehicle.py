@@ -45,6 +45,11 @@ class Vehicle:
         self.assignment_time = 0.0
         self.parking_time = 0.0
         self.search_time = 0.0
+        
+        # Sistema de detección de bloqueos
+        self.stuck_counter = 0
+        self.last_position = (x, y)
+        self.path_recalc_timer = 0.0
     
     def set_waypoints(self, waypoints: List[Tuple[float, float]]):
         """Establece la ruta de waypoints a seguir"""
@@ -136,7 +141,12 @@ class Vehicle:
             if other.state == "PARKED":
                 continue
             
-            # IMPORTANTE: Si ambos están en ARRIVING, ignorar colisión
+            # IMPORTANTE: Si ambos están en ENTERING, ignorar colisión
+            # (permite que múltiples vehículos sigan la ruta de entrada)
+            if self.state == "ENTERING" and other.state == "ENTERING":
+                continue
+            
+            # Si ambos están en ARRIVING, ignorar colisión
             # (permite que múltiples vehículos esperen en la entrada)
             if self.state == "ARRIVING" and other.state == "ARRIVING":
                 continue

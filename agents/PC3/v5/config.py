@@ -20,8 +20,13 @@ AISLE_WIDTH = 50  # Ancho de pasillos para vehículos
 INITIAL_VEHICLES = 8
 MAX_VEHICLES = 30
 VEHICLE_ARRIVAL_INTERVAL = 4.0
+VEHICLE_SPAWN_DELAY = 5.0  # Delay entre spawns de vehículos (segundos)
 VEHICLE_SPEED = 2.5
 VEHICLE_SIZE = 10  # Radio de colisión
+
+# Punto de entrada (esquina superior izquierda)
+ENTRY_POINT_X = 50
+ENTRY_POINT_Y = 50
 
 # Estrategia de asignación
 ASSIGNMENT_STRATEGY = "greedy"  # "greedy", "balanced", "priority"

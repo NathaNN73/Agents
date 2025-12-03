@@ -6,6 +6,7 @@ import math
 from typing import List, Dict, Optional, Tuple
 from vehicle import Vehicle
 from config import *
+from pathfinding import PathfindingGrid, AStarPathfinder
 
 class ParkingBehaviour(CyclicBehaviour):
     async def run(self):
@@ -23,6 +24,14 @@ class ParkingAgent(Agent):
         self.simulation_time = 0.0
         self.next_arrival_time = 0.0
         
+        # Sistema de spawn con delay
+        self.spawn_queue = []  # Cola de vehículos pendientes de spawn
+        self.last_spawn_time = 0.0
+        
+        # Sistema de pathfinding dinámico
+        self.pathfinding_grid = PathfindingGrid(MAP_WIDTH, MAP_HEIGHT, cell_size=10)
+        self.pathfinder = AStarPathfinder(self.pathfinding_grid)
+        
         self.paused = False
         self.step_delay = 0.1
         self.speed_multiplier = 1.0
@@ -37,20 +46,24 @@ class ParkingAgent(Agent):
             'total_reassignments': 0,
             'spots_free': TOTAL_SPOTS,
             'spots_occupied': 0,
-            'vehicles_waiting': 0
+            'vehicles_waiting': 0,
+            'path_recalculations': 0
         }
         
         self.search_times = []
         self.parking_times = []
         
-        # Layout del parking
+        # Layout del parking - entrada desde arriba-izquierda
         self.parking_layout = {
-            'entrance_x': 50,
+            'entry_x': ENTRY_POINT_X,
+            'entry_y': ENTRY_POINT_Y,
+            'entry_turn_y': MAP_HEIGHT / 2,  # Punto donde gira hacia la derecha
+            'entrance_x': 150,  # Punto de entrada al área de parking
             'entrance_y': MAP_HEIGHT / 2,
             'exit_x': MAP_WIDTH - 50,
             'exit_y': MAP_HEIGHT / 2,
             'main_aisle_y': MAP_HEIGHT / 2,
-            'rows_start_x': 100
+            'rows_start_x': 200
         }
     
     async def setup(self):
@@ -61,7 +74,8 @@ class ParkingAgent(Agent):
         behaviour = ParkingBehaviour()
         self.add_behaviour(behaviour)
         
-        print(f"Sistema inicializado: {TOTAL_SPOTS} plazas, {len(self.vehicles)} vehículos")
+        print(f"Sistema inicializado: {TOTAL_SPOTS} plazas, {len(self.spawn_queue)} vehículos en cola")
+        print("✨ Sistema de pathfinding A* activado")
     
     def _create_parking_spots(self):
         """Crea layout de parking con plazas organizadas en filas"""
@@ -122,58 +136,117 @@ class ParkingAgent(Agent):
                 }
                 spot_id += 1
     
-    def _generate_path_to_spot(self, vehicle: Vehicle, spot: Dict) -> List[Tuple[float, float]]:
-        """Genera ruta de waypoints desde posición actual hasta la plaza"""
-        waypoints = []
+    def _update_pathfinding_grid(self):
+        """Actualiza el grid de pathfinding con obstáculos dinámicos"""
+        # Limpiar grid
+        self.pathfinding_grid.clear_obstacles()
         
-        # 1. Moverse hacia el pasillo principal si no está ahí
+        # Agregar plazas ocupadas como obstáculos
+        for spot in self.parking_spots.values():
+            if spot['occupied']:
+                self.pathfinding_grid.add_rect_obstacle(
+                    spot['x'], spot['y'], 
+                    SPOT_WIDTH + 5, SPOT_HEIGHT + 5
+                )
+        
+        # Agregar vehículos estacionados y bloqueados como obstáculos
+        for vehicle in self.vehicles:
+            if not vehicle.active:
+                continue
+            
+            # Solo agregar como obstáculo si está estacionado o bloqueado
+            if vehicle.state == "PARKED":
+                self.pathfinding_grid.add_obstacle(vehicle.x, vehicle.y, VEHICLE_SIZE + 5)
+            elif vehicle.state == "MOVING_TO_SPOT":
+                # Agregar vehículos que están atascados (no se han movido recientemente)
+                if hasattr(vehicle, 'stuck_counter') and vehicle.stuck_counter > 10:
+                    self.pathfinding_grid.add_obstacle(vehicle.x, vehicle.y, VEHICLE_SIZE + 3)
+    
+    def _generate_entry_path(self, vehicle: Vehicle) -> List[Tuple[float, float]]:
+        """Genera ruta desde el punto de entrada hasta el área de parking usando A*"""
+        self._update_pathfinding_grid()
+        
+        # Usar A* para encontrar camino
+        path = self.pathfinder.find_path(
+            vehicle.x, vehicle.y,
+            self.parking_layout['entrance_x'], 
+            self.parking_layout['entrance_y']
+        )
+        
+        if path:
+            return path
+        
+        # Fallback: ruta simple si A* falla
+        waypoints = []
+        entry_turn_y = self.parking_layout['entry_turn_y']
+        waypoints.append((ENTRY_POINT_X, entry_turn_y))
+        entrance_x = self.parking_layout['entrance_x']
+        waypoints.append((entrance_x, entry_turn_y))
+        return waypoints
+    
+    def _generate_path_to_spot(self, vehicle: Vehicle, spot: Dict) -> List[Tuple[float, float]]:
+        """Genera ruta dinámica desde posición actual hasta la plaza usando A*"""
+        self._update_pathfinding_grid()
+        
+        # Temporalmente marcar la plaza destino como libre para pathfinding
+        # (para que el vehículo pueda planear llegar ahí)
+        target_x = spot['x']
+        target_y = spot['y']
+        
+        # Usar A* para encontrar el camino
+        path = self.pathfinder.find_path(
+            vehicle.x, vehicle.y,
+            target_x, target_y
+        )
+        
+        if path and len(path) > 0:
+            return path
+        
+        # Fallback: ruta simple si A* falla
+        waypoints = []
         main_aisle_y = self.parking_layout['main_aisle_y']
+        
         if abs(vehicle.y - main_aisle_y) > 20:
             waypoints.append((vehicle.x, main_aisle_y))
         
-        # 2. Moverse horizontalmente por el pasillo principal hasta la columna de la plaza
         target_col_x = spot['x']
         waypoints.append((target_col_x, main_aisle_y))
         
-        # 3. Girar hacia el pasillo vertical de esa columna
         if spot['side'] == "top":
-            # Plaza está arriba del pasillo principal
             aisle_y = spot['y'] + SPOT_HEIGHT / 2 + AISLE_WIDTH / 2
         else:
-            # Plaza está abajo
             aisle_y = spot['y'] - SPOT_HEIGHT / 2 - AISLE_WIDTH / 2
         
         waypoints.append((target_col_x, aisle_y))
-        
-        # 4. Finalmente, entrar a la plaza
         waypoints.append((spot['x'], spot['y']))
         
         return waypoints
     
     def _create_initial_vehicles(self):
-        """Crea vehículos iniciales con separación"""
-        entrance_x = self.parking_layout['entrance_x']
-        entrance_y = self.parking_layout['entrance_y']
-        
+        """Crea vehículos iniciales en la cola de spawn"""
         for i in range(INITIAL_VEHICLES):
             vehicle_type = random.choices(
                 ["normal", "discapacitado", "electrico"],
                 weights=[0.85, 0.05, 0.10]
             )[0]
             
-            # Posicionar con separación horizontal
-            offset_x = i * 15  # Separación de 15 píxeles
-            vehicle = Vehicle(entrance_x + offset_x, entrance_y, vehicle_type)
-            vehicle.arrival_time = self.simulation_time
-            self.vehicles.append(vehicle)
-            self.stats['total_arrived'] += 1
+            # Agregar a la cola de spawn con tiempo de spawn
+            spawn_time = i * VEHICLE_SPAWN_DELAY
+            self.spawn_queue.append({
+                'spawn_time': spawn_time,
+                'vehicle_type': vehicle_type
+            })
     
     async def update_parking_system(self):
         dt = 0.1 * self.speed_multiplier
         self.simulation_time += dt
         
-        if self.simulation_time >= self.next_arrival_time and len(self.vehicles) < MAX_VEHICLES:
-            await self._spawn_vehicle()
+        # Procesar cola de spawn con delay
+        await self._process_spawn_queue()
+        
+        # Generar nuevos vehículos según intervalo
+        if self.simulation_time >= self.next_arrival_time and len(self.vehicles) + len(self.spawn_queue) < MAX_VEHICLES:
+            await self._queue_vehicle()
             self.next_arrival_time = self.simulation_time + VEHICLE_ARRIVAL_INTERVAL
         
         for vehicle in self.vehicles[:]:
@@ -183,45 +256,88 @@ class ParkingAgent(Agent):
         
         self._update_stats()
     
-    async def _spawn_vehicle(self):
-        """Genera un nuevo vehículo con posición libre"""
-        entrance_x = self.parking_layout['entrance_x']
-        entrance_y = self.parking_layout['entrance_y']
-        
-        # Buscar posición libre en la entrada
-        offset = 0
-        max_attempts = 10
-        for attempt in range(max_attempts):
-            test_x = entrance_x + offset
-            test_y = entrance_y
-            
-            # Verificar si hay espacio
-            collision = False
-            for other in self.vehicles:
-                if not other.active:
-                    continue
-                dist = math.sqrt((other.x - test_x)**2 + (other.y - test_y)**2)
-                if dist < VEHICLE_SIZE * 3:
-                    collision = True
-                    break
-            
-            if not collision:
-                break
-            
-            offset += 15
-        
+    async def _queue_vehicle(self):
+        """Agrega un nuevo vehículo a la cola de spawn"""
         vehicle_type = random.choices(
             ["normal", "discapacitado", "electrico"],
             weights=[0.85, 0.05, 0.10]
         )[0]
         
-        vehicle = Vehicle(entrance_x + offset, entrance_y, vehicle_type)
+        self.spawn_queue.append({
+            'spawn_time': self.simulation_time,
+            'vehicle_type': vehicle_type
+        })
+    
+    async def _process_spawn_queue(self):
+        """Procesa la cola de spawn con delay entre vehículos"""
+        if not self.spawn_queue:
+            return
+        
+        # Verificar si ha pasado suficiente tiempo desde el último spawn
+        if self.simulation_time - self.last_spawn_time < VEHICLE_SPAWN_DELAY:
+            return
+        
+        # Spawn del siguiente vehículo en la cola
+        next_vehicle = self.spawn_queue[0]
+        if self.simulation_time >= next_vehicle['spawn_time']:
+            self.spawn_queue.pop(0)
+            await self._spawn_vehicle(next_vehicle['vehicle_type'])
+            self.last_spawn_time = self.simulation_time
+    
+    async def _spawn_vehicle(self, vehicle_type: str):
+        """Genera un nuevo vehículo en el punto de entrada"""
+        entry_x = self.parking_layout['entry_x']
+        entry_y = self.parking_layout['entry_y']
+        
+        # Crear vehículo en el punto de entrada (arriba-izquierda)
+        vehicle = Vehicle(entry_x, entry_y, vehicle_type)
         vehicle.arrival_time = self.simulation_time
+        vehicle.state = "ENTERING"  # Nuevo estado para entrada
+        vehicle.stuck_counter = 0  # Contador para detectar bloqueos
+        vehicle.last_position = (entry_x, entry_y)
+        vehicle.path_recalc_timer = 0
+        
+        # Generar ruta de entrada
+        entry_waypoints = self._generate_entry_path(vehicle)
+        vehicle.set_waypoints(entry_waypoints)
+        
         self.vehicles.append(vehicle)
         self.stats['total_arrived'] += 1
     
     async def _update_vehicle_behaviour(self, vehicle: Vehicle, dt: float):
-        if vehicle.state == "ARRIVING":
+        # Detectar si el vehículo está atascado
+        if vehicle.state in ["ENTERING", "MOVING_TO_SPOT"]:
+            dist_moved = math.sqrt(
+                (vehicle.x - vehicle.last_position[0])**2 + 
+                (vehicle.y - vehicle.last_position[1])**2
+            )
+            
+            if dist_moved < 0.5:  # No se ha movido mucho
+                vehicle.stuck_counter = getattr(vehicle, 'stuck_counter', 0) + 1
+            else:
+                vehicle.stuck_counter = 0
+                vehicle.last_position = (vehicle.x, vehicle.y)
+            
+            # Si está muy atascado, recalcular ruta
+            vehicle.path_recalc_timer = getattr(vehicle, 'path_recalc_timer', 0) + dt
+            if vehicle.stuck_counter > 20 and vehicle.path_recalc_timer > 2.0:
+                await self._recalculate_path(vehicle)
+                vehicle.path_recalc_timer = 0
+                self.stats['path_recalculations'] += 1
+        
+        if vehicle.state == "ENTERING":
+            # Vehículo está siguiendo la ruta de entrada
+            arrived = vehicle.move_along_path(
+                list(self.parking_spots.values()),
+                self.vehicles
+            )
+            
+            if arrived:
+                # Llegó al área de parking, cambiar a estado ARRIVING
+                vehicle.state = "ARRIVING"
+                vehicle.stuck_counter = 0
+        
+        elif vehicle.state == "ARRIVING":
             spot = self._assign_spot(vehicle)
             if spot:
                 vehicle.assigned_spot = spot['id']
@@ -233,9 +349,10 @@ class ParkingAgent(Agent):
                 vehicle.assignment_time = self.simulation_time
                 vehicle.search_time = vehicle.assignment_time - vehicle.arrival_time
                 
-                # Generar ruta
+                # Generar ruta usando A*
                 waypoints = self._generate_path_to_spot(vehicle, spot)
                 vehicle.set_waypoints(waypoints)
+                vehicle.stuck_counter = 0
                 
                 self.parking_spots[spot['id']]['reserved_by'] = vehicle.id
         
@@ -253,6 +370,7 @@ class ParkingAgent(Agent):
                 vehicle.parking_time = self.simulation_time
                 self.stats['total_parked'] += 1
                 self.search_times.append(vehicle.search_time)
+                vehicle.stuck_counter = 0
         
         elif vehicle.state == "PARKED":
             vehicle.parked_time += dt
@@ -272,6 +390,23 @@ class ParkingAgent(Agent):
                 vehicle.active = False
                 self.vehicles.remove(vehicle)
                 self.stats['total_left'] += 1
+    
+    async def _recalculate_path(self, vehicle: Vehicle):
+        """Recalcula la ruta de un vehículo atascado"""
+        if vehicle.state == "ENTERING":
+            # Recalcular ruta de entrada
+            new_path = self._generate_entry_path(vehicle)
+            if new_path:
+                vehicle.set_waypoints(new_path)
+                print(f"🔄 Vehículo {vehicle.id}: Ruta de entrada recalculada")
+        
+        elif vehicle.state == "MOVING_TO_SPOT" and vehicle.assigned_spot is not None:
+            # Recalcular ruta a la plaza
+            spot = self.parking_spots[vehicle.assigned_spot]
+            new_path = self._generate_path_to_spot(vehicle, spot)
+            if new_path:
+                vehicle.set_waypoints(new_path)
+                print(f"🔄 Vehículo {vehicle.id}: Ruta a plaza {vehicle.assigned_spot} recalculada")
     
     def _assign_spot(self, vehicle: Vehicle) -> Optional[Dict]:
         if ASSIGNMENT_STRATEGY == "greedy":

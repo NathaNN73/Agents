@@ -1,32 +1,30 @@
 import asyncio
 import sys
-from simulation_agent import SimulationAgent
+from parking_agent import ParkingAgent
 from http_server import WebServer
 from config import *
 
-
 async def main():
-    print("🧬 SIMULACIÓN DE SELECCIÓN NATURAL")
+    print("🅿️ SISTEMA DE ESTACIONAMIENTO INTELIGENTE")
     
     # Crea agente
-    print("Inicializando agente de simulación...")
-    agent = SimulationAgent(AGENT_JID, AGENT_PASSWORD)
+    print("Inicializando agente de parking...")
+    agent = ParkingAgent(AGENT_JID, AGENT_PASSWORD)
     await agent.setup()
     
-    # Crear y arranca servidor web en hilo separado
+    # Crear y arrancar servidor web en hilo separado
     web_server = WebServer(agent)
     web_server.start_in_thread()
     
-    print("✅ SIMULACIÓN INICIADA")
+    print("✅ SISTEMA INICIADO")
     print(f"Interfaz web disponible en: http://localhost:{WEB_PORT}")
     print()
-    print("Ctrl+C para detener simulación")
+    print("Ctrl+C para detener sistema")
     print()
     
-    # Ejecuta la simulación
+    # Ejecuta el sistema
     try:
         behaviour = agent.behaviours[0] if agent.behaviours else None
-        
         if behaviour:
             while True:
                 await behaviour.run()
@@ -35,17 +33,15 @@ async def main():
             # Fallback
             while True:
                 if not agent.paused:
-                    await agent.update_simulation()
+                    await agent.update_parking_system()
                 await asyncio.sleep(agent.step_delay)
-                
     except KeyboardInterrupt:
-        print("\n\n🛑 Deteniendo simulación...")
+        print("\n\n🛑 Deteniendo sistema...")
         sys.exit(0)
-
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("\n\n🛑 Simulación detenida")
+        print("\n\n🛑 Sistema detenido")
         sys.exit(0)
